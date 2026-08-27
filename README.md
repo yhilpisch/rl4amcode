@@ -70,7 +70,7 @@ See `requirements.txt` for the full dependency list. The core stack is:
 
 ## Disclaimer
 
-This repository and its contents are provided for educational and illustrative purposes only and come without any warranty or guarantees of any kind — express or implied. Use at your own risk. The authors and The Python Quants GmbH are not responsible for any direct or indirect damages, losses, or issues arising from the use of this code. Do not use the provided examples for critical decision‑making, financial transactions, or production deployments without rigorous review, testing, and validation.
+This repository and its contents are provided for educational and illustrative purposes only and come without any warranty or guarantees of any kind — express or implied. Use at your own risk. The authors and The Python Quants GmbH are not responsible for any direct or indirect damages, losses, or issues arising from the use of this code. Do not use the provided examples for critical decision-making, financial transactions, or production deployments without rigorous review, testing, and validation.
 
 Research, structuring, drafting, and visualizations in this project were assisted by LLMs as co-writing tools and coding assistants under human direction.
 

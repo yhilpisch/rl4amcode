@@ -5,7 +5,7 @@ project:
 
 data:
   source: data/eod_data.csv
-  symbol: EURUSD 
+  symbol: EURUSD
   date_column: auto
   price_column: auto
   return_type: simple
