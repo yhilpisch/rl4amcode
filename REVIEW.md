@@ -1,4 +1,34 @@
-# rl4amcode Review
+# Companion code review — 26 October 2026
+
+Lecture: **27 October 2026**. This assessment supersedes the historical
+test results retained below. The full local review and proposed changes are
+in [`../rl4am/REVIEW.md`](../rl4am/REVIEW.md), in the sibling lecture repository;
+that report is not included in a standalone clone of this repository.
+
+## Corrections and current validation
+
+- Both notebooks now fall back to existing reference configurations.
+- DQN inspection uses the main evaluation seed; A2C narrative correctly
+  identifies mode-policy evaluation. Companion outputs remain cleared.
+- Both notebooks passed structural validation and code-cell syntax checks.
+  Active Python files parsed successfully.
+- Package sources/tests match the lecture repository. Configuration files
+  differ only by existing trailing whitespace in `configs/default.yml`.
+- Pytest: **70 passed and three failed**. `test_load_default_config` and
+  `test_load_market_data_falls_back_to_remote` assume the omitted local CSV
+  exists. `test_load_market_data_for_symbol` also needs that file or network
+  access; its network fallback was unavailable in this environment.
+
+Substantial fixes remain proposed: historical train/test overlap disclosure,
+baseline/agent horizon alignment, first-period metric handling, offline data
+and persisted normalisation, optional walk-forward/sampling paths, and
+mathematical documentation. Publication-builder tools and canonical result
+artefacts are not included in this distribution. No training, algorithms,
+saved numerical results, or publication outputs were changed.
+
+---
+
+## Historical review — superseded by the assessment above
 
 ## Scope
 
