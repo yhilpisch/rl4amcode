@@ -1,3 +1,28 @@
+# Corrections completed — 26 October 2026
+
+The companion suite passes all 84 tests.
+It requires no market CSV or network access.
+Both notebook sources match the lecture repository.
+Companion notebook outputs remain cleared.
+
+Metrics include initial capital and the first return.
+Comparisons use matching dates.
+Disjoint sampling and chronological helpers have regression coverage.
+Unsafe evaluation normalisation is rejected.
+New checkpoints retain fitted inference statistics.
+The data-cache tool verifies the frozen snapshot checksum.
+The metadata records known provenance limits.
+
+The historical profiles remain fixed reference profiles.
+They are not presented as verified sweep winners.
+The companion repository does not bundle historical fitted runs.
+Exact lecture-result reconstruction requires those saved inputs.
+
+The implementation checkpoint is `60c086b`.
+The earlier review remains below for context.
+
+---
+
 # Companion code review — 26 October 2026
 
 Lecture: **27 October 2026**. This assessment supersedes the historical
