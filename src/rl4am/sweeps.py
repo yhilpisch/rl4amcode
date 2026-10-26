@@ -11,6 +11,8 @@ from typing import Any
 import numpy as np
 import pandas as pd
 import torch
+
+from rl4am.provenance import inference_contract
 import yaml
 from tqdm.auto import tqdm
 
@@ -1012,11 +1014,15 @@ def _save_dqn_run_artifacts(
             "policy_name": evaluation.name,
             "double_dqn": trained.double_dqn,
             "sampling": slice_manifest_payload(trained.slices),
+            "inference_contract": inference_contract(config, trained.slices),
             "objective_score": row["objective_score"],
         },
     )
     torch.save(
         {
+            "inference_contract": inference_contract(
+                config, trained.slices
+            ),
             "state_dict": trained.model.state_dict(),
             "target_state_dict": trained.target_model.state_dict(),
             "action_grid": trained.action_grid.weights.tolist(),
@@ -1091,11 +1097,15 @@ def _save_a2c_run_artifacts(
             "updates": len(trained.history),
             "policy_name": evaluation.name,
             "sampling": slice_manifest_payload(trained.slices),
+            "inference_contract": inference_contract(config, trained.slices),
             "objective_score": row["objective_score"],
         },
     )
     torch.save(
         {
+            "inference_contract": inference_contract(
+                config, trained.slices
+            ),
             "state_dict": trained.model.state_dict(),
             "min_weight": trained.model.min_weight,
             "max_weight": trained.model.max_weight,

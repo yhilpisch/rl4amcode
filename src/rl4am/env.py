@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 import numpy as np
 from numpy.lib.stride_tricks import sliding_window_view
@@ -39,7 +39,7 @@ class SingleAssetAllocationEnv:
         initial_weight: float = 0.0,
         state_features: dict[str, object] | None = None,
         reward: dict[str, object] | None = None,
-        normalization: StateNormalization | None = None,
+        normalization: StateNormalization | None | bool=None,
     ) -> None:
         self.returns = _as_1d_returns(returns)
         self.window = int(window)
@@ -63,16 +63,18 @@ class SingleAssetAllocationEnv:
         self._reward_spec = _build_reward_spec(self.reward_config)
 
         self._feature_spec = _build_feature_spec(self.state_features)
+        if normalization is False:
+            self._feature_spec = replace(self._feature_spec, normalize=False)
         feature_matrix, feature_names = _build_feature_matrix(
             returns=self.returns,
             spec=self._feature_spec,
         )
         if self._feature_spec.normalize:
-            self._normalization = normalization or fit_state_normalization(
-                returns_list=[self.returns],
-                window=self.window,
-                state_features=self.state_features,
-            )
+            if not isinstance(normalization, StateNormalization):
+                raise ValueError(
+                    "Normalised environments require training-fitted statistics"
+                )
+            self._normalization = normalization
             self._return_mean = self._normalization.return_mean
             self._return_std = self._normalization.return_std
             if self._feature_spec.enabled:
@@ -106,7 +108,7 @@ class SingleAssetAllocationEnv:
         min_weight: float = 0.0,
         max_weight: float = 1.0,
         initial_weight: float = 0.0,
-        normalization: StateNormalization | None = None,
+        normalization: StateNormalization | None | bool=None,
     ) -> SingleAssetAllocationEnv:
         """Build an environment from the canonical environment config."""
         return cls(
@@ -235,6 +237,12 @@ def _as_1d_returns(returns: np.ndarray) -> np.ndarray:
     if not np.isfinite(array).all():
         raise ValueError("returns must contain only finite values")
     return array
+
+
+def evaluation_start_index(config: EnvironmentConfig) -> int:
+    """Return the warm-up length without fitting evaluation statistics."""
+    spec = _build_feature_spec(config.state_features)
+    return max(config.window, spec.required_history)
 
 
 def _scalar_action(action: float | np.ndarray) -> float:

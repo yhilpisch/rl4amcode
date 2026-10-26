@@ -20,6 +20,14 @@ class MarketData:
     source: str
     prices: pd.Series
     returns: pd.Series
+    return_type: str = "simple"
+
+    @property
+    def simple_returns(self) -> pd.Series:
+        """Expose simple returns for portfolio accounting."""
+        if self.return_type == "log":
+            return np.expm1(self.returns)
+        return self.returns
 
     @property
     def dates(self) -> pd.Index:
@@ -59,6 +67,7 @@ def load_market_data(config: DataConfig) -> MarketData:
         source=source,
         prices=prices,
         returns=returns,
+        return_type=config.return_type,
     )
 
 

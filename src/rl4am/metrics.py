@@ -82,7 +82,7 @@ def performance_summary(
 ) -> dict[str, float]:
     """Compute the core performance metrics for a simple-return series."""
     ret = np.asarray(returns, dtype=float)
-    equity = equity_curve(ret, start=start)
+    equity = np.insert(equity_curve(ret, start=start), 0, float(start))
     return {
         "annualised_return": annualised_return_from_equity(
             equity,

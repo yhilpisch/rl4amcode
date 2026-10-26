@@ -26,16 +26,27 @@ A good, broad reference on reinforcement learning for dynamic decision making in
 Install the package in development mode:
 
 ```bash
-pip install -e .
+python -m pip install -e '.[test,notebooks]'
 ```
 
-Run the test suite:
+Cache the exact lecture snapshot before running the workbenches:
 
 ```bash
-pytest
+python tools/prepare_data.py
 ```
 
-Train an A2C agent with the reference configuration:
+If the public endpoint has changed, provide the frozen lecture CSV with
+`--source /path/to/eod_data.csv`. The script validates its checksum and never
+replaces a different existing file. The metadata sidecar records the known
+source, date range, checksum, and provenance limitations.
+
+Run the offline, fixture-backed test suite:
+
+```bash
+python -m pytest -q
+```
+
+Train an A2C agent with the supplied historical profile:
 
 ```bash
 rl4am train-a2c --config configs/a2c_best.yml --output-dir results/a2c
@@ -58,6 +69,31 @@ Compare saved strategy results:
 ```bash
 rl4am compare-results results/a2c/test_slices/test_000 results/baselines_a2c/grid_best/test_slices/test_000
 ```
+
+## Interpretation and reproducibility
+
+The reported case study uses overlapping historical scenarios: training covers
+all A2C evaluation rows and 99.7% of DQN evaluation rows. It does not provide an
+independent holdout test. Both agents share ten evaluation windows but differ
+in training samples, seeds, and budgets. Differences in scores do not isolate
+algorithm choice or replay efficiency.
+
+The supplied package supports fresh experiments. Exact lecture outputs also
+require the historical fitted runs and publication assets held with the
+lecture resources; those are not bundled here. New runs save their effective
+configuration, training slices, data/configuration checksums, and fitted input
+normalisation in the inference contract. Metrics include initial capital;
+agent/baseline comparisons use matching post-warm-up dates.
+
+Workbench notebooks reuse a matching saved run when available. Set a new
+`report.run_id` before disabling `REUSE_SAVED_RESULTS` to train afresh. Output
+paths differ between run IDs; do not mix runs in comparisons.
+
+`overlap: false` enforces disjoint training/test windows. Use
+`normalization: training_pool` or `none`; whole-evaluation-slice fitting is
+rejected. Log-return data is converted to simple returns for accounting.
+Chronological helpers have synthetic regression coverage, but the lecture
+makes no empirical walk-forward claim.
 
 ## Requirements
 

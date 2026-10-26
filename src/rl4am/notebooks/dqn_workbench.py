@@ -6,6 +6,8 @@ from pathlib import Path
 
 import pandas as pd
 import torch
+
+from rl4am.provenance import inference_contract
 import yaml
 
 from rl4am.config import AppConfig, load_config
@@ -240,6 +242,9 @@ def run_dqn_training(
         )
     torch.save(
         {
+            "inference_contract": inference_contract(
+                context.config, training.slices
+            ),
             "state_dict": training.model.state_dict(),
             "target_state_dict": training.target_model.state_dict(),
             "action_grid": training.action_grid.weights.tolist(),

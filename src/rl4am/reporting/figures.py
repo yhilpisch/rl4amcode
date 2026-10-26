@@ -15,7 +15,7 @@ from matplotlib import dates as mdates
 from matplotlib.ticker import MaxNLocator
 import pandas as pd
 
-from rl4am.reporting.comparison import align_equity_series, rebase_equity_series
+from rl4am.reporting.comparison import align_equity_series
 from rl4am.results import load_strategy_result
 
 
@@ -30,7 +30,6 @@ def build_equity_comparison_figure(
     left = load_strategy_result(left_path)
     right = load_strategy_result(right_path)
     aligned = align_equity_series(left, right, use_net=use_net)
-    aligned = rebase_equity_series(aligned)
     out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
     out_path = out / "equity_compare.png"

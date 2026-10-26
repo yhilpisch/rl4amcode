@@ -61,11 +61,11 @@ def _table_to_tex(table: pd.DataFrame) -> str:
     lines = [
         r"\begin{tabular}{" + aligns + "}",
         r"\toprule",
-        " & ".join(cols) + r" \\",
+        " & ".join(_escape_tex(str(col)) for col in cols) + r" \\",
         r"\midrule",
     ]
     for _, row in table.iterrows():
-        values = [str(row[cols[0]])]
+        values = [_escape_tex(str(row[cols[0]]))]
         for col in cols[1:]:
             values.append(_format_metric(float(row[col]), row[cols[0]]))
         lines.append(" & ".join(values) + r" \\")
@@ -83,3 +83,12 @@ def _format_metric(value: float, metric_name: str) -> str:
 
 def _display_name(name: str) -> str:
     return DISPLAY_NAMES.get(name, name)
+
+
+def _escape_tex(text: str) -> str:
+    escapes = {
+        "\\": r"\textbackslash{}", "_": r"\_", "&": r"\&",
+        "%": r"\%", "#": r"\#", "$": r"\$", "{": r"\{",
+        "}": r"\}", "~": r"\textasciitilde{}", "^": r"\textasciicircum{}",
+    }
+    return "".join(escapes.get(char, char) for char in text)

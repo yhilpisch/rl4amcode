@@ -87,5 +87,6 @@ baselines:
   min_weight: 0.01
   mean_variance_alpha: 0.25
 report:
+  run_id: cqf_20261027
   output_profile: paper
   figure_format: png

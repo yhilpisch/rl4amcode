@@ -41,7 +41,7 @@ def sample_market_slices(
     data: MarketData,
     config: SamplingConfig,
 ) -> SliceSet:
-    returns = data.returns.to_numpy(dtype=float)
+    returns = data.simple_returns.to_numpy(dtype=float)
     dates = data.returns.index
     if config.mode == "walk_forward":
         return _sample_walk_forward_slices(
@@ -58,20 +58,32 @@ def sample_market_slices(
         raise ValueError("sampling.trading_days_per_slice exceeds available return rows")
 
     rng = np.random.default_rng(config.seed)
-    train_starts = _sample_start_indices(
-        rng=rng,
-        total_length=returns.shape[0],
-        slice_length=slice_length,
-        n_slices=config.train_slices,
-        overlap=config.overlap,
-    )
-    test_starts = _sample_start_indices(
-        rng=rng,
-        total_length=returns.shape[0],
-        slice_length=slice_length,
-        n_slices=config.test_slices,
-        overlap=config.overlap,
-    )
+    if not config.overlap:
+        starts = _sample_start_indices(
+            rng=rng,
+            total_length=len(returns),
+            slice_length=slice_length,
+            n_slices=config.train_slices + config.test_slices,
+            overlap=False,
+        )
+        starts = rng.permutation(starts)
+        train_starts = starts[:config.train_slices]
+        test_starts = starts[config.train_slices:]
+    else:
+        train_starts = _sample_start_indices(
+            rng=rng,
+            total_length=returns.shape[0],
+            slice_length=slice_length,
+            n_slices=config.train_slices,
+            overlap=True,
+        )
+        test_starts = _sample_start_indices(
+            rng=rng,
+            total_length=returns.shape[0],
+            slice_length=slice_length,
+            n_slices=config.test_slices,
+            overlap=True,
+        )
     return SliceSet(
         train=tuple(
             _build_slice(
@@ -235,8 +247,8 @@ def _sample_start_indices(
     if overlap:
         return rng.integers(0, max_start + 1, size=n_slices, endpoint=False)
 
-    starts = np.arange(0, max_start + 1)
-    if n_slices > starts.shape[0]:
-        raise ValueError("Not enough distinct slice starts for non-overlapping sampling")
-    selected = rng.choice(starts, size=n_slices, replace=False)
-    return np.sort(selected.astype(int))
+    slack = total_length - n_slices * slice_length
+    if slack < 0:
+        raise ValueError("Not enough rows for non-overlapping slices")
+    gaps = rng.multinomial(slack, np.full(n_slices + 1, 1 / (n_slices + 1)))
+    return np.cumsum(gaps[:-1]) + np.arange(n_slices) * slice_length

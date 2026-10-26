@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from rl4am.config import EnvironmentConfig
-from rl4am.env import SingleAssetAllocationEnv
+from rl4am.env import SingleAssetAllocationEnv, fit_state_normalization
 
 
 def test_reset_returns_window_and_weight() -> None:
@@ -185,7 +185,13 @@ def test_engineered_state_features_without_normalization() -> None:
 
 
 def test_engineered_state_features_normalize_non_weight_inputs() -> None:
+    calibration = np.array([0.01, 0.02, -0.03, 0.01, 0.04, -0.02])
+    features = {
+        "enabled": True, "normalize": True, "ret_lookback": [3],
+        "vol_lookback": [3], "trend_gap": [4], "drawdown_lookback": [4],
+    }
     env = SingleAssetAllocationEnv(
+        normalization=fit_state_normalization([calibration], 3, features),
         returns=np.array(
             [0.01, 0.02, -0.03, 0.01, 0.04, -0.02, 0.03, 0.01],
             dtype=float,
@@ -219,6 +225,7 @@ def test_engineered_state_features_normalize_non_weight_inputs() -> None:
 def test_return_window_normalizes_without_engineered_features() -> None:
     returns = np.array([0.01, 0.02, -0.03, 0.01, 0.04], dtype=float)
     env = SingleAssetAllocationEnv(
+        normalization=fit_state_normalization([returns], 3, {}),
         returns=returns,
         window=3,
         initial_weight=0.3,

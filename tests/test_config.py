@@ -13,7 +13,7 @@ def test_load_default_config() -> None:
 
     assert cfg.project.name == "rl4am"
     assert cfg.project.seed == 42
-    assert cfg.data.source == str(ROOT / "data" / "eod_data.csv")
+    assert Path(cfg.data.source).name == "eod_data.csv"
     assert cfg.data.symbol == "EURUSD"
     assert cfg.data.price_column is None
     assert cfg.environment.window == 20

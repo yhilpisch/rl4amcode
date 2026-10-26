@@ -39,7 +39,8 @@ build/
 dist/
 *.egg-info/
 .eggs/
-pip-wheel-metadata/
+pip-wheel-metadata/*
+!data/*.meta.json
 wheels/
 .python-version
 .pdm.toml
@@ -72,7 +73,8 @@ model.pt
 *.pt
 
 # Data files
-data/
+data/*
+!data/*.meta.json
 *.csv
 !tests/fixtures/*.csv
 *.npy

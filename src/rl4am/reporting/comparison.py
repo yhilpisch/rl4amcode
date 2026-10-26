@@ -32,14 +32,12 @@ def compare_strategy_results(
             "continuous path; compare saved test_slices/<slice> results "
             "or use slice-level summaries."
         )
-    left_series = _select_equity_series(left, use_net=use_net)
-    right_series = _select_equity_series(right, use_net=use_net)
-    aligned = align_equity_series(left, right, use_net=use_net)
+    aligned = align_return_series(left, right, use_net=use_net)
     if aligned.empty:
         raise ValueError("No overlapping rows between the two strategy results")
 
-    left_returns = aligned["left"].pct_change().dropna().to_numpy(dtype=float)
-    right_returns = aligned["right"].pct_change().dropna().to_numpy(dtype=float)
+    left_returns = aligned["left"].to_numpy(dtype=float)
+    right_returns = aligned["right"].to_numpy(dtype=float)
     left_metrics = performance_summary(left_returns)
     right_metrics = performance_summary(right_returns)
     return ComparisonView(
@@ -48,8 +46,8 @@ def compare_strategy_results(
         rows=int(aligned.shape[0]),
         left_metrics=left_metrics,
         right_metrics=right_metrics,
-        left_terminal_equity=float(aligned["left"].iloc[-1]),
-        right_terminal_equity=float(aligned["right"].iloc[-1]),
+        left_terminal_equity=left_metrics["terminal_equity"],
+        right_terminal_equity=right_metrics["terminal_equity"],
     )
 
 
@@ -70,8 +68,23 @@ def align_equity_series(
     use_net: bool = True,
 ) -> pd.DataFrame:
     """Align the selected equity series for two results on their common span."""
-    left_series = _select_equity_series(left, use_net=use_net)
-    right_series = _select_equity_series(right, use_net=use_net)
+    returns = align_return_series(left, right, use_net=use_net)
+    return (1.0 + returns).cumprod()
+
+
+def align_return_series(
+    left: StrategyResult,
+    right: StrategyResult,
+    use_net: bool=True,
+) -> pd.DataFrame:
+    """Align saved period returns, retaining the first common return."""
+    if _is_random_slice_aggregate(left) or _is_random_slice_aggregate(right):
+        raise ValueError("Aggregate random-slice paths cannot be aligned")
+    column = "net_return" if use_net else "gross_return"
+    left_series = left.returns[column]
+    right_series = right.returns[column]
+    if not left_series.index.is_unique or not right_series.index.is_unique:
+        raise ValueError("Comparison indices must be unique")
     return pd.concat(
         [left_series.rename("left"), right_series.rename("right")],
         axis=1,

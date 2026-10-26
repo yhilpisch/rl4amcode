@@ -6,6 +6,8 @@ from pathlib import Path
 
 import pandas as pd
 import torch
+
+from rl4am.provenance import inference_contract
 import yaml
 
 from rl4am.config import AppConfig, load_config
@@ -244,6 +246,9 @@ def run_a2c_training(
         )
     torch.save(
         {
+            "inference_contract": inference_contract(
+                context.config, training.slices
+            ),
             "state_dict": training.model.state_dict(),
             "min_weight": training.model.min_weight,
             "max_weight": training.model.max_weight,

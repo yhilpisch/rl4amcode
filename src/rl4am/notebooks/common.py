@@ -16,9 +16,12 @@ from rl4am.baselines import (
     average_standard_baseline_weights,
     build_standard_baselines_from_weights,
 )
+from rl4am.provenance import inference_contract
 from rl4am.config import AppConfig, load_config
 from rl4am.data import load_market_data, summarise_market_data
-from rl4am.env import SingleAssetAllocationEnv, fit_state_normalization
+from rl4am.env import SingleAssetAllocationEnv, evaluation_start_index
+from rl4am.metrics import performance_summary
+from rl4am.training.common import resolve_normalization
 from rl4am.evaluation import EvaluationResult
 from rl4am.reporting.comparison import compare_strategy_paths, rebase_equity_series
 from rl4am.reporting.slices import build_slice_metric_frame, build_slice_summary_table
@@ -157,6 +160,9 @@ def prepare_context(
     policy_subdir: str,
 ) -> WorkbenchContext:
     run_root = root / "runs" / run_name
+    run_id = config.report.get("run_id")
+    if run_id:
+        run_root = root / "runs" / f"{run_name}_{run_id}"
     baseline_dir = run_root / "baselines"
     policy_dir = run_root / policy_subdir
     report_dir = run_root / "report_compare"
@@ -224,7 +230,9 @@ def run_baselines(
     _validate_artifact_level(artifact_level)
     baseline_cfg = context.config.baselines
     baseline_grid_size = int(baseline_cfg.get("grid_size", 21))
-    calibration_slices = context.slices.train or context.eval_slices
+    calibration_slices = context.slices.train
+    if not calibration_slices:
+        raise ValueError("Baselines require training slices for calibration")
     baseline_weights = average_standard_baseline_weights(
         returns_slices=[item.returns for item in calibration_slices],
         riskless_rate=context.config.environment.riskless_rate,
@@ -240,7 +248,9 @@ def run_baselines(
     )
     per_slice_results = [
         build_standard_baselines_from_weights(
-            returns=item.returns,
+            returns=item.returns[evaluation_start_index(
+                context.config.environment
+            ):],
             weights=baseline_weights,
             riskless_rate=context.config.environment.riskless_rate,
             transaction_cost=context.config.environment.transaction_cost,
@@ -399,7 +409,11 @@ def build_comparison_artifacts(
         compared_results.append(reference_result)
     selected_metrics = pd.DataFrame(
         {
-            result.name: result.metrics["net"]
+            result.name: performance_summary(
+                result.returns.loc[
+                    selected_policy_result.returns.index, "net_return"
+                ].to_numpy(dtype=float)
+            )
             for result in compared_results
         }
     )
@@ -456,7 +470,9 @@ def _save_baseline_slice_results(
             result=result,
             output_dir=output_dir,
             kind="baseline",
-            dates=test_slice.dates,
+            dates=test_slice.dates[evaluation_start_index(
+                context.config.environment
+            ):],
             metadata={
                 **_run_metadata(context),
                 "slice_id": test_slice.slice_id,
@@ -976,6 +992,9 @@ def _run_metadata(context: WorkbenchContext) -> dict[str, object]:
         mode=context.config.sampling.mode,
     )
     payload = {
+        "inference_contract": inference_contract(
+            context.config, context.slices
+        ),
         "config": str(context.config_path),
         "source": context.config.data.source,
         "symbol": context.config.data.symbol,
@@ -1008,6 +1027,13 @@ def _aligned_result_frame(
     column: str,
     rebase: bool = False,
 ) -> pd.DataFrame:
+    if section == "equity":
+        returns = pd.concat(
+            [result.returns["net_return"].rename(result.name)
+             for result in results],
+            axis=1, join="inner",
+        ).dropna()
+        return (1.0 + returns).cumprod()
     series = [
         getattr(result, section)[column].rename(result.name)
         for result in results
@@ -1036,14 +1062,7 @@ def _build_eval_env(
 
 
 def _resolve_notebook_normalization(context: WorkbenchContext):
-    mode = context.config.sampling.normalization
-    if mode == "training_pool":
-        return fit_state_normalization(
-            returns_list=[item.returns for item in context.slices.train],
-            window=context.config.environment.window,
-            state_features=context.config.environment.state_features,
-        )
-    return None
+    return resolve_normalization(context.slices, context.config)
 
 
 def _plot_pair(

@@ -63,6 +63,7 @@ def test_policy_action_is_clipped_by_environment() -> None:
 
 def test_evaluation_result_tracks_env_start_index() -> None:
     env = SingleAssetAllocationEnv(
+        normalization=False,
         returns=np.array([0.01, 0.02, -0.01, 0.03, 0.01, 0.02]),
         window=2,
         state_features={

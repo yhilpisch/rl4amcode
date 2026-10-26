@@ -7,6 +7,8 @@ from pathlib import Path
 
 import torch
 
+from rl4am.provenance import inference_contract
+
 from rl4am.baselines import (
     aggregate_baseline_results,
     average_standard_baseline_weights,
@@ -15,6 +17,7 @@ from rl4am.baselines import (
 from rl4am.config import load_config
 from rl4am.data import load_market_data, summarise_market_data
 from rl4am.metrics import performance_summary
+from rl4am.env import evaluation_start_index
 from rl4am.results import save_many_strategy_results, save_strategy_result
 from rl4am.reporting.comparison import compare_strategy_paths
 from rl4am.reporting.figures import build_equity_comparison_figure
@@ -381,7 +384,7 @@ def _baseline_summary(
     )
     per_slice_results = [
         build_standard_baselines_from_weights(
-            returns=item.returns,
+            returns=item.returns[evaluation_start_index(config.environment):],
             weights=baseline_weights,
             riskless_rate=config.environment.riskless_rate,
             transaction_cost=config.environment.transaction_cost,
@@ -420,7 +423,9 @@ def _baseline_summary(
                     result=result,
                     output_dir=output_dir / name / "test_slices" / f"test_{index:03d}",
                     kind="baseline",
-                    dates=test_slice.dates,
+                    dates=test_slice.dates[
+                        evaluation_start_index(config.environment):
+                    ],
                     metadata={
                         "config": str(config_path),
                         "source": config.data.source,
@@ -500,10 +505,14 @@ def _train_dqn(
                 "policy_name": evaluation.name,
                 "double_dqn": trained.double_dqn,
                 "sampling": slice_manifest_payload(slices),
+                "inference_contract": inference_contract(config, slices),
             },
         )
         torch.save(
             {
+                "inference_contract": inference_contract(
+                    config, trained.slices
+                ),
                 "state_dict": trained.model.state_dict(),
                 "target_state_dict": trained.target_model.state_dict(),
                 "action_grid": trained.action_grid.weights.tolist(),
@@ -631,10 +640,14 @@ def _train_a2c(
                 "device": str(device),
                 "policy_name": evaluation.name,
                 "sampling": slice_manifest_payload(slices),
+                "inference_contract": inference_contract(config, slices),
             },
         )
         torch.save(
             {
+                "inference_contract": inference_contract(
+                    config, trained.slices
+                ),
                 "state_dict": trained.model.state_dict(),
                 "min_weight": trained.model.min_weight,
                 "max_weight": trained.model.max_weight,

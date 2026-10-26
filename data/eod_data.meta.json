@@ -1,0 +1,20 @@
+{
+  "source_institution": "Dr. Yves J. Hilpisch/The Python Quants (distribution endpoint); original vendor not recorded",
+  "source_urls": ["https://hilpisch.com/eod_data.csv"],
+  "retrieval_date": null,
+  "verification_date": "2026-10-26",
+  "redistribution_note": "The CSV is not committed. No additional redistribution rights are asserted. Use the existing lecture snapshot or the publisher's endpoint.",
+  "transformation_summary": "No transformation of the cached CSV. Portfolio accounting uses simple returns from the selected price column.",
+  "schema": {
+    "Date": "ISO date",
+    "AAPL": "price", "NVDA": "price", "JPM": "price", "SPY": "price",
+    "GLD": "price", "TLT": "price", "EURUSD": "spot USD per EUR",
+    "BTC-USD": "price in USD"
+  },
+  "rows": 2514,
+  "start_date": "2016-01-04",
+  "end_date": "2025-12-31",
+  "sha256": "949904965a389d65dd26848d6f5ef32b90ba16b3fd2454ba87080a9acbfdecf0",
+  "intended_usage": "CQF lecture, 27 October 2026: overlapping historical EURUSD allocation scenarios",
+  "provenance_limitation": "Original retrieval date and upstream vendor are unknown; verification date is not a claimed retrieval date."
+}

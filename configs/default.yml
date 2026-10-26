@@ -85,5 +85,6 @@ baselines:
   mean_variance_alpha: 0.25  # cautious Kelly
 
 report:
+  run_id: cqf_20261027
   output_profile: paper
   figure_format: png

@@ -155,9 +155,10 @@ def build_config(raw: dict[str, Any], path: str | Path) -> AppConfig:
             raise ValueError("sampling.train_days is required for walk_forward")
         if sampling.test_days is None:
             raise ValueError("sampling.test_days is required for walk_forward")
-    if sampling.normalization not in {"training_pool", "per_slice", "none"}:
+    if sampling.normalization not in {"training_pool", "none"}:
         raise ValueError(
-            "sampling.normalization must be one of training_pool, per_slice, none"
+            "sampling.normalization must be training_pool or none; "
+            "per_slice would leak evaluation information"
         )
 
     return AppConfig(

@@ -89,8 +89,10 @@ def resolve_normalization(
     config: AppConfig,
 ):
     mode = config.sampling.normalization
-    if mode == "none":
-        return None
+    if mode == "none" or not config.environment.state_features.get(
+        "normalize", False
+    ):
+        return False
     if mode == "training_pool":
         return fit_state_normalization(
             returns_list=[item.returns for item in slices.train],
@@ -98,7 +100,7 @@ def resolve_normalization(
             state_features=config.environment.state_features,
         )
     if mode == "per_slice":
-        return None
+        raise ValueError("per_slice normalisation is unsafe for evaluation")
     raise ValueError(f"Unsupported normalization mode: {mode}")
 
 

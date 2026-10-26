@@ -17,6 +17,7 @@ from rl4am.baselines import (
 )
 from rl4am.config import AppConfig, load_config
 from rl4am.data import load_market_data, summarise_market_data
+from rl4am.env import evaluation_start_index
 from rl4am.evaluation import EvaluationResult, aggregate_evaluations
 from rl4am.slices import MarketSlice, SliceSet, sample_market_slices
 from rl4am.training.a2c import train_a2c_actor_critic
@@ -146,6 +147,12 @@ def run_walk_forward(
     show_progress: bool = True,
 ) -> WalkForwardResult:
     baseline_windows: dict[str, list[object]] = {}
+    if context.config.sampling.mode != "walk_forward":
+        raise ValueError("Walk-forward execution requires walk_forward mode")
+    test_days = context.config.sampling.test_days
+    step_days = context.config.sampling.step_days or test_days
+    if step_days < test_days:
+        raise ValueError("Walk-forward test windows must not overlap")
     a2c_windows: list[EvaluationResult] = []
     dqn_windows: list[EvaluationResult] = []
     weight_rows = []
@@ -175,7 +182,9 @@ def run_walk_forward(
                 {"window": index, "strategy": name, "weight": weight}
             )
         baseline_results = build_standard_baselines_from_weights(
-            returns=test_slice.returns,
+            returns=test_slice.returns[
+                evaluation_start_index(context.config.environment):
+            ],
             weights=baseline_weights,
             riskless_rate=context.config.environment.riskless_rate,
             transaction_cost=context.config.environment.transaction_cost,
@@ -200,19 +209,16 @@ def run_walk_forward(
         name: aggregate_baseline_results(
             items,
             name=name,
-            risk_free_rate=context.config.environment.riskless_rate,
         )
         for name, items in baseline_windows.items()
     }
     a2c_result = aggregate_evaluations(
         a2c_windows,
         name="a2c_mode",
-        risk_free_rate=context.config.environment.riskless_rate,
     )
     dqn_result = aggregate_evaluations(
         dqn_windows,
         name="dqn_greedy",
-        risk_free_rate=context.config.environment.riskless_rate,
     )
     metric_frame = _metric_frame(
         baseline_results=baseline_results,
@@ -290,7 +296,9 @@ def _walk_forward_test_dates(context: WalkForwardContext) -> pd.Index:
     dates = [
         date
         for test_slice in context.slices.test
-        for date in test_slice.dates
+        for date in test_slice.dates[
+            evaluation_start_index(context.config.environment):
+        ]
     ]
     return pd.Index(dates, name="date")
 

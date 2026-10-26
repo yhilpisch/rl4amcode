@@ -12,7 +12,8 @@ from tqdm.auto import trange
 from rl4am.agents.action_grid import ActionGrid
 from rl4am.agents.dqn import DQNConfig, DiscreteQNetwork, GreedyDQNPolicy
 from rl4am.config import AppConfig
-from rl4am.env import SingleAssetAllocationEnv, fit_state_normalization
+from rl4am.env import SingleAssetAllocationEnv
+from rl4am.training.common import resolve_normalization
 from rl4am.evaluation import EvaluationResult, aggregate_evaluations, evaluate_policy
 from rl4am.slices import SliceSet
 
@@ -418,15 +419,4 @@ def _resolve_normalization(
     slices: SliceSet,
     config: AppConfig,
 ):
-    mode = config.sampling.normalization
-    if mode == "none":
-        return None
-    if mode == "training_pool":
-        return fit_state_normalization(
-            returns_list=[item.returns for item in slices.train],
-            window=config.environment.window,
-            state_features=config.environment.state_features,
-        )
-    if mode == "per_slice":
-        return None
-    raise ValueError(f"Unsupported normalization mode: {mode}")
+    return resolve_normalization(slices, config)

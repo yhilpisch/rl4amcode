@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from dataclasses import replace
 
 import numpy as np
 import pandas as pd
@@ -49,6 +50,10 @@ def test_build_sweep_winner_frame_formats_display_values(tmp_path) -> None:
 
 def test_run_baselines_defaults_to_selected_slice_artifacts(tmp_path) -> None:
     config = load_config("configs/default.yml")
+    config = replace(config, environment=replace(
+        config.environment, window=1,
+        state_features={"enabled": False, "normalize": False},
+    ))
     dates = pd.date_range("2024-01-01", periods=4, freq="D")
     slices = SliceSet(
         train=(),
@@ -74,6 +79,9 @@ def test_run_baselines_defaults_to_selected_slice_artifacts(tmp_path) -> None:
         seed=42,
         overlap=True,
     )
+    slices = replace(slices, train=(replace(
+        slices.test[0], slice_id="train_000", split="train",
+    ),))
     context = WorkbenchContext(
         root=tmp_path,
         config_path=tmp_path / "config.yml",
@@ -106,6 +114,10 @@ def test_run_baselines_defaults_to_selected_slice_artifacts(tmp_path) -> None:
 
 def test_run_metadata_records_evaluation_sampling(tmp_path) -> None:
     config = load_config("configs/default.yml")
+    config = replace(config, environment=replace(
+        config.environment, window=1,
+        state_features={"enabled": False, "normalize": False},
+    ))
     dates = pd.date_range("2024-01-01", periods=4, freq="D")
     train_slice = MarketSlice(
         slice_id="train_000",
